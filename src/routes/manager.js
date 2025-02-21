@@ -21,8 +21,7 @@ Router.post("/managers/auth/validate", checkToken, controllerManager.validate);
 /* +++++++ MANAGERS +++++++ +++++++ +++++++ +++++++ +++++++ +++++++ +++++++ */
 Router.post(
   "/managers",
-  //validation.handleValidationErrors,
-  checkToken,
+  // checkToken,
   controllerManager.insertOne
 );
 Router.get("/managers", checkToken, controllerManager.findMany);

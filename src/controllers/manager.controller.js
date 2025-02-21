@@ -125,11 +125,13 @@ exports.insertOne = async (req, res, next) => {
       hashIdAuth: hashIdAuth,
     });
 
-    const resualt = await item.save();
-    res
-      .status(200)
-      .json(httpResponseOk({ name: resualt.name, family: resualt.family }));
+    await item.save();
+    return res.status(200).json(httpResponseOk("created admin"));
   } catch (err) {
+    if (err.code == 11000)
+      return res
+        .status(404)
+        .json({ status: "error", message: "مدیر وجود دارد" });
     next(err);
   }
 };
