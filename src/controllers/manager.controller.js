@@ -34,14 +34,12 @@ exports.login = async (req, res) => {
           { hashIdAuth: item.hashIdAuth },
           process.env.JWT_ACCESS_TOKEN_SECRET_MANAGER
         );
-        res
-          .status(200)
-          .json(
-            httpResponseOk({
-              username: item.username,
-              accessToken: accessToken,
-            })
-          );
+        res.status(200).json(
+          httpResponseOk({
+            username: item.username,
+            accessToken: accessToken,
+          })
+        );
       } else {
         loginLogger(
           req,
@@ -93,59 +91,65 @@ exports.validate = async (req, res) => {
   res.status(200).json(httpResponseOk({}));
 };
 
-exports.insertOne = async (req, res) => {
-  // ------- HASH ID ------- //
-  const hashIdPublicSalt = randomstring.generate(128);
-  const hashIdPublicString = `manager-id-${
-    req.body.username
-  }-${hashIdPublicSalt}-${Date.now()}`;
-  // const hashIdPublic = SHA256(hashIdPublicString);
-  const hashIdPublic = md5(hashIdPublicString);
-
-  // ------- HASH AUHT ------- //
-  const hashIdAuthSalt = randomstring.generate(512);
-  const hashIdAuthString = `manager-auth-${
-    req.body.username
-  }-${hashIdAuthSalt}-${Date.now()}`;
-  const hashIdAuth = md5(hashIdAuthString);
-
-  // ------- PASSWORD ------- //
-  let password = null;
-  if (req.body.password) {
-    //const passwordSalt = await bcrypt.genSalt();
-    password = await bcrypt.hash(req.body.password, 10);
-  }
-
-  const item = new modelItem({
-    username: req.body.username,
-    name: req.body.name,
-    family: req.body.family,
-    email: req.body.email,
-    password: password,
-    phone: req.body.phone,
-    mobile: req.body.mobile,
-    hashIdPublic: hashIdPublic,
-    hashIdAuth: hashIdAuth,
-  });
-
+exports.insertOne = async (req, res, next) => {
   try {
+    // ------- HASH ID ------- //
+    const hashIdPublicSalt = randomstring.generate(128);
+    const hashIdPublicString = `manager-id-${
+      req.body.username
+    }-${hashIdPublicSalt}-${Date.now()}`;
+    const hashIdPublic = md5(hashIdPublicString);
+
+    // ------- HASH AUHT ------- //
+    const hashIdAuthSalt = randomstring.generate(512);
+    const hashIdAuthString = `manager-auth-${
+      req.body.username
+    }-${hashIdAuthSalt}-${Date.now()}`;
+    const hashIdAuth = md5(hashIdAuthString);
+
+    // ------- PASSWORD ------- //
+    let password = null;
+    if (req.body.password) {
+      password = await bcrypt.hash(req.body.password, 10);
+    }
+
+    const item = new modelItem({
+      username: req.body.username,
+      name: req.body.name,
+      family: req.body.family,
+      email: req.body.email,
+      password: password,
+      phone: req.body.phone,
+      mobile: req.body.mobile,
+      hashIdPublic: hashIdPublic,
+      hashIdAuth: hashIdAuth,
+    });
+
     const resualt = await item.save();
     res
       .status(200)
       .json(httpResponseOk({ name: resualt.name, family: resualt.family }));
-  } catch (e) {
-    res.status(400).json(httpResponseError(e.message));
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.findOne = async (req, res) => {
-  let data = await modelItem.findOne({ hashIdPublic: req.params.id });
-  res.status(200).json(httpResponseOk(data));
+exports.findOne = async (req, res, next) => {
+  try {
+    let data = await modelItem.findOne({ hashIdPublic: req.params.id });
+    return res.status(200).json(httpResponseOk(data));
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.findMany = async (req, res) => {
-  const data = await modelItem.find({});
-  res.status(200).json(httpResponseOk(data));
+exports.findMany = async (req, res, next) => {
+  try {
+    const data = await modelItem.find({});
+    return res.status(200).json(httpResponseOk(data));
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.updateOne = async (req, res) => {
@@ -186,6 +190,10 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
-exports.deleteOne = async (req, res) => {
-  res.status(200).json(httpResponseOk({}));
+exports.deleteOne = async (req, res, next) => {
+  try {
+    return res.status(200).json(httpResponseOk("err"));
+  } catch (err) {
+    next(err);
+  }
 };
